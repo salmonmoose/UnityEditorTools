@@ -31,6 +31,7 @@ THE SOFTWARE.
  */
 using UnityEngine;
 using UnityEditor;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -45,76 +46,67 @@ public static class AutoBuilder {
  
   static string[] GetScenePaths()
   {
-    string[] scenes = new string[EditorBuildSettings.scenes.Length];
- 
-    for(int i = 0; i < scenes.Length; i++)
+    List<string> EditorScenes = new List<string>();
+
+    foreach (EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
     {
-      scenes[i] = EditorBuildSettings.scenes[i].path;
+      if (scene.enabled)
+      {
+        EditorScenes.Add(scene.path);
+      }
     }
- 
-    return scenes;
+
+    return EditorScenes.ToArray();
   }
  
+  static void GenericBuild(string[] scenes, string targetDirectory, BuildTarget buildTarget, BuildOptions buildOptions)
+  {
+    EditorUserBuildSettings.SwitchActiveBuildTarget(buildTarget);
+    string result = BuildPipeline.BuildPlayer(scenes, targetDirectory, buildTarget, buildOptions);
+    if (result.Length > 0) {
+      throw new Exception("BuildPlayer failure: " + result);
+    }
+  }
+
   [MenuItem("File/AutoBuilder/Windows/32-bit")]
   static void PerformWinBuild ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.StandaloneWindows);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Win/" + GetProjectName() + ".exe", BuildTarget.StandaloneWindows, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/Win/" + GetProjectName() + ".exe", BuildTarget.StandaloneWindows, BuildOptions.None);
   }
  
   [MenuItem("File/AutoBuilder/Windows/64-bit")]
   static void PerformWin64Build ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.StandaloneWindows64);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Win64/" + GetProjectName() + ".exe", BuildTarget.StandaloneWindows64, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/Win64/" + GetProjectName() + ".exe", BuildTarget.StandaloneWindows64, BuildOptions.None);
   }
  
   [MenuItem("File/AutoBuilder/Mac OSX/Universal")]
   static void PerformOSXUniversalBuild ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.StandaloneOSXUniversal);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/OSX-Universal/" + GetProjectName() + ".app", BuildTarget.StandaloneOSXUniversal, BuildOptions.None);
-  }
-
-  [MenuItem("File/AutoBuilder/Linux/32-bit")]
-  static void PerformLinuxBuild ()
-  {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.StandaloneLinux);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Linux/" + GetProjectName(), BuildTarget.StandaloneLinux, BuildOptions.None);
-  }
- 
-  [MenuItem("File/AutoBuilder/Linux/64-bit")]
-  static void PerformLinux64Build ()
-  {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.StandaloneLinux64);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Linux64/" + GetProjectName(), BuildTarget.StandaloneLinux64, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/OSX-Universal/" + GetProjectName() + ".app", BuildTarget.StandaloneOSXUniversal, BuildOptions.None);
   }
 
   [MenuItem("File/AutoBuilder/Linux/Universal")]
   static void PerformLinuxUniversalBuild ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.StandaloneLinuxUniversal);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/LinuxUniversal/" + GetProjectName(), BuildTarget.StandaloneLinuxUniversal, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/Linux-Universal/" + GetProjectName(), BuildTarget.StandaloneLinuxUniversal, BuildOptions.None);
   }
 
   [MenuItem("File/AutoBuilder/iOS")]
   static void PerformiOSBuild ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.iOS);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/iOS", BuildTarget.iOS, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/iOS", BuildTarget.iOS, BuildOptions.None);
   }
 
   [MenuItem("File/AutoBuilder/Android")]
   static void PerformAndroidBuild ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/Android", BuildTarget.Android, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/Android", BuildTarget.Android, BuildOptions.None);
   }
 
   [MenuItem("File/AutoBuilder/WebGL")]
   static void PerformWebBuild ()
   {
-    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.WebGL);
-    BuildPipeline.BuildPlayer(GetScenePaths(), "Builds/WebGL", BuildTarget.WebGL, BuildOptions.None);
+    GenericBuild(GetScenePaths(), "Builds/WebGL/", BuildTarget.WebGL, BuildOptions.None);
   }
 }
